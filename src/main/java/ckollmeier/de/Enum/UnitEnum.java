@@ -7,45 +7,45 @@ public enum UnitEnum {
     /**
      * Miligram.
      */
-    MG("Milligram", "mg", new BigDecimal("0.001"), "g", 0),
+    MG("Milligram", "mg", new BigDecimal("0.001"), "g"),
     /**
      * Gram.
      */
-    G("Gram", "g", new BigDecimal(1), "g", 2),
+    G("Gram", "g", new BigDecimal(1), "g"),
     /**
      * Kilogram.
      */
-    KG("Kilogram", "kg", new BigDecimal("1000"), "g", 3),
+    KG("Kilogram", "kg", new BigDecimal("1000"), "g"),
     /**
      * Ton.
      */
-    T("Ton", "t", new BigDecimal("1000000"), "g", 2),
+    T("Ton", "t", new BigDecimal("1000000"), "g"),
 
     /**
      * Milliliter.
      */
-    ML("Milliliter", "ml", new BigDecimal("0.001"), "l", 0),
+    ML("Milliliter", "ml", new BigDecimal("0.001"), "l"),
     /**
      * Centiliter.
      */
-    CL("Centiliter", "cl", new BigDecimal("0.01"), "l", 1),
+    CL("Centiliter", "cl", new BigDecimal("0.01"), "l"),
     /**
      * Deziliter.
      */
-    DL("Deziliter", "dl", new BigDecimal("0.1"), "l", 2),
+    DL("Deziliter", "dl", new BigDecimal("0.1"), "l"),
     /**
      * Liter.
      */
-    L("Liter", "l", new BigDecimal("1"), "l", 3),
+    L("Liter", "l", new BigDecimal("1"), "l"),
     /**
      * Cubic metre.
      */
-    M3("Cubic metre", "m^3", new BigDecimal("1000"), "l", 2),
+    M3("Cubic metre", "m^3", new BigDecimal("1000"), "l"),
 
     /**
      * Pieces.
      */
-    PCS("Pieces", "p", new BigDecimal("1"), "p", 0);
+    PCS("Pieces", "p", new BigDecimal("1"), "p");
 
     /**
      * name of the unit.
@@ -64,16 +64,16 @@ public enum UnitEnum {
      */
     private String base;
     /**
-     * precision of this unit.
+     * scale of this unit.
      */
-    private int precision;
+    private int scale;
 
     UnitEnum(
             final String unitName,
             final String shortName,
             final BigDecimal factor,
-            final String base,
-            final int precision) {
+            final String base
+    ) {
         this.unitName = unitName;
         this.shortName = shortName;
         this.factor = factor;
@@ -92,8 +92,13 @@ public enum UnitEnum {
         return factor;
     }
 
-    private UnitEnum getBaseUnit() {
-        return switch (base) {
+    /**
+     * @param unitString string to match
+     * @return unitEnum for the string
+     */
+    public static UnitEnum getUnitForShort(final String unitString) {
+        return switch (unitString) {
+            case "mg" -> MG;
             case "g" -> G;
             case "kg" -> KG;
             case "t" -> T;
@@ -101,10 +106,14 @@ public enum UnitEnum {
             case "cl" -> CL;
             case "dl" -> DL;
             case "l" -> L;
-            case "m" -> M3;
+            case "m^3" -> M3;
             case "p" -> PCS;
-            default -> throw new IllegalStateException("Unexpected value: " + base);
+            default -> throw new IllegalStateException("Unexpected value: " + unitString);
         };
+    }
+
+    private UnitEnum getBaseUnit() {
+        return getUnitForShort(base);
     }
 
     /**
@@ -119,11 +128,12 @@ public enum UnitEnum {
             throw new IllegalArgumentException("units not convertible");
         }
         // into base unit
-        BigDecimal inBase = getBaseUnit().factor.divide(factor, toUnit.precision, RoundingMode.HALF_UP);
-        return inBase.multiply(toUnit.getFactor());
+        BigDecimal intoBase = getBaseUnit().factor.divide(factor);
+        BigDecimal intoUnit = intoBase.multiply(toUnit.getFactor());
+        return intoUnit.setScale(Math.max(toUnit.scale, intoUnit.scale()), RoundingMode.HALF_UP);
     }
 
-    public int getPrecision() {
-        return precision;
+    public int getScale() {
+        return scale;
     }
 }

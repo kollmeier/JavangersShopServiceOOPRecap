@@ -1,6 +1,7 @@
 package ckollmeier.de.Repository;
 
 import ckollmeier.de.Entity.Product;
+import ckollmeier.de.Enum.UnitEnum;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -32,7 +33,12 @@ public final class ProductRepository {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }
-        return null;
+        Product productWithId = productWithId(product);
+        if (find(productWithId.id()) != null) {
+            throw new IllegalArgumentException("Product with id " + productWithId.id() + " already exists");
+        }
+        products.add(productWithId);
+        return productWithId;
     }
 
     /**
@@ -43,7 +49,7 @@ public final class ProductRepository {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }
-        return null;
+        return removeProductWithId(product.id());
     }
 
     /**
@@ -54,10 +60,27 @@ public final class ProductRepository {
         if (productId == null) {
             throw new IllegalArgumentException("Product id cannot be null");
         }
-        return null;
+        Product found = find(productId);
+        if (found == null) {
+            throw new IllegalArgumentException("Product with id " + productId + " not found");
+        }
+        products.remove(found);
+        return found;
     }
 
+    /**
+     * @param id id of product to find
+     * @return found product or null
+     */
     public Product find(final String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Product id cannot be null");
+        }
+        for (Product product : products) {
+            if (product.id().equals(id)) {
+                return product;
+            }
+        }
         return null;
     }
 
@@ -68,24 +91,54 @@ public final class ProductRepository {
     /**
      * @param product product to increase the quantity
      * @param quantity quantity in amounts of unit
+     * @param unit unit of the added amount
+     * @return product with increased quantity
      */
-    public void increaseQuantity(final Product product, final BigDecimal quantity) {
-
+    public Product increaseQuantity(final Product product, final BigDecimal quantity, final UnitEnum unit) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product cannot be null");
+        }
+        if (quantity == null) {
+            throw new IllegalArgumentException("Quantity cannot be null");
+        }
+        if (unit == null) {
+            throw new IllegalArgumentException("Unit cannot be null");
+        }
+        Product found = removeProduct(product);
+        return addProduct(found.withQuantity(
+                found.quantity().add(quantity.multiply(found.unit().conversionFactor(unit)))
+        ));
     }
 
     /**
      * @param product product to decrease the quantity
      * @param quantity quantity in amounts of unit
+     * @param unit unit of the added amount
+     * @return product with decreased quantity
      */
-    public void decreaseQuantity(final Product product, final BigDecimal quantity) {
-
+    public Product decreaseQuantity(final Product product, final BigDecimal quantity, final UnitEnum unit) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product cannot be null");
+        }
+        if (quantity == null) {
+            throw new IllegalArgumentException("Quantity cannot be null");
+        }
+        if (unit == null) {
+            throw new IllegalArgumentException("Unit cannot be null");
+        }
+        Product found = removeProduct(product);
+        return addProduct(found.withQuantity(
+                found.quantity().subtract(quantity.multiply(found.unit().conversionFactor(unit)))
+        ));
     }
 
     /**
      * @param productId productId to increase the quantity
      * @param quantity quantity in amounts of unit
+     * @param unit unit of the added amount
+     * @return product with increased quantity
      */
-    public void increaseQuantityById(final String productId, final BigDecimal quantity) {
+    public Product increaseQuantityById(final String productId, final BigDecimal quantity, final UnitEnum unit) {
         if (productId == null) {
             throw new IllegalArgumentException("Product id cannot be null");
         }
@@ -93,14 +146,16 @@ public final class ProductRepository {
         if (product == null) {
             throw new IllegalArgumentException("Product not found");
         }
-        increaseQuantity(product, quantity);
+        return increaseQuantity(product, quantity, unit);
     }
 
     /**
      * @param productId productId to decrease the quantity
      * @param quantity quantity in amounts of unit
+     * @param unit unit of the decreased amount
+     * @return product with decreased quantity
      */
-    public void decreaseQuantityById(final String productId, final BigDecimal quantity) {
+    public Product decreaseQuantityById(final String productId, final BigDecimal quantity, final UnitEnum unit) {
         if (productId == null) {
             throw new IllegalArgumentException("Product id cannot be null");
         }
@@ -108,6 +163,10 @@ public final class ProductRepository {
         if (product == null) {
             throw new IllegalArgumentException("Product not found");
         }
-        decreaseQuantity(product, quantity);
+        return decreaseQuantity(product, quantity, unit);
+    }
+
+    public int countProducts() {
+        return products.size();
     }
 }
