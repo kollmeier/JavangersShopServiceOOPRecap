@@ -1,7 +1,6 @@
 package ckollmeier.de.Repository;
 
 import ckollmeier.de.Entity.Interface.ProductInterface;
-import ckollmeier.de.Entity.Product;
 import ckollmeier.de.Entity.StockArticle;
 import ckollmeier.de.Enum.UnitEnum;
 
