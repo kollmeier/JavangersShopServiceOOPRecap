@@ -2,236 +2,133 @@ package ckollmeier.de.Repository;
 
 import ckollmeier.de.Entity.Product;
 import ckollmeier.de.Entity.ProductBuilder;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ProductRepositoryTest {
 
-    @Test
-    void addProductShouldThrowIllegalArgumentExceptionWhenProductIsNull() {
-        ProductRepository productRepository = new ProductRepository();
+    private ProductRepository productRepository;
+    private Product testProduct1;
+    private Product testProduct2;
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.addProduct(null);
-        });
+    @BeforeEach
+    void setUp() {
+        productRepository = new ProductRepository();
+        testProduct1 = ProductBuilder.builder().name("Coca-Cola").build();
+        testProduct2 = ProductBuilder.builder().name("Fanta").build();
     }
 
     @Test
-    void addProductShouldAddProductWithUuidAsIdWhenProductHasNoUuid() {
-        ProductRepository productRepository = new ProductRepository();
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola").build();
+    void addProduct_shouldThrowIllegalArgumentException_whenProductIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> productRepository.addProduct(null));
+    }
 
-        Product addedProduct = productRepository.addProduct(product);
-
-        assertNotNull(product, addedProduct.id());
+    @Test
+    void addProduct_shouldAddProductWithUuidAsId_whenProductHasNoUuid() {
+        Product addedProduct = productRepository.addProduct(testProduct1);
+        assertNotNull(addedProduct.id());
         assertThat(addedProduct.id()).matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     }
 
     @Test
-    void addProductShouldAddProductWithUnchangedUuidWhenProductHasUuid() {
-        ProductRepository productRepository = new ProductRepository();
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .id("12214309-08e7-4875-beb1-33da650e04f7")
-                .build();
-
-        Product addedProduct = productRepository.addProduct(product);
-
-        assertNotNull(product, addedProduct.id());
+    void addProduct_shouldAddProductWithUnchangedUuid_whenProductHasUuid() {
+        Product productWithId = testProduct1.withId("12214309-08e7-4875-beb1-33da650e04f7");
+        Product addedProduct = productRepository.addProduct(productWithId);
         assertThat(addedProduct.id()).isEqualTo("12214309-08e7-4875-beb1-33da650e04f7");
     }
 
     @Test
-    void addProductShouldThrowInvalidArgumentExceptionWhenProductWithIdAlreadyExists() {
-        ProductRepository productRepository = new ProductRepository();
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .build();
-
-        Product addedProduct = productRepository.addProduct(product);
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.addProduct(addedProduct);
-        });
+    void addProduct_shouldThrowInvalidArgumentException_whenProductWithIdAlreadyExists() {
+        Product addedProduct = productRepository.addProduct(testProduct1);
+        assertThrows(IllegalArgumentException.class, () -> productRepository.addProduct(addedProduct));
     }
 
     @Test
-    void addProductShouldIncreaseProductCountWhenProductWasAdded() {
-        ProductRepository productRepository = new ProductRepository();
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .build();
-
-        Product addedProduct = productRepository.addProduct(product);
-
-        Product product2 = ProductBuilder.builder()
-                .name("Fanta")
-                .build();
-
-        Product addedProduct2 = productRepository.addProduct(product2);
-
+    void addProduct_shouldIncreaseProductCount_whenProductWasAdded() {
+        productRepository.addProduct(testProduct1);
+        productRepository.addProduct(testProduct2);
         assertThat(productRepository.countProducts()).isEqualTo(2);
     }
 
     @Test
-    void removeProductShouldThrowIllegalArgumentExceptionWhenProductIsNull() {
-        ProductRepository productRepository = new ProductRepository();
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.removeProduct(null);
-        });
+    void removeProduct_shouldThrowIllegalArgumentException_whenProductIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProduct(null));
     }
 
     @Test
-    void removeProductShouldThrowIllegalArgumentExceptionWhenProductIdIsNull() {
-        ProductRepository productRepository = new ProductRepository();
-
-        Product product = ProductBuilder.builder()
-                .name("Cola").build();
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.removeProduct(product);
-        });
+    void removeProduct_shouldThrowIllegalArgumentException_whenProductIdIsNull() {
+        Product product = ProductBuilder.builder().name("Cola").build();
+        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProduct(product));
     }
 
     @Test
-    void removeProductShouldThrowIllegalArgumentExceptionWhenProductIsNotFound() {
-        ProductRepository productRepository = new ProductRepository();
-
-        Product product = ProductBuilder.builder()
-                .name("Cola").build();
-
-        productRepository.addProduct(product);
-
-        Product product2 = ProductBuilder.builder()
-                .name("Fanta").build();
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.removeProduct(product2);
-        });
+    void removeProduct_shouldThrowIllegalArgumentException_whenProductIsNotFound() {
+        productRepository.addProduct(testProduct1);
+        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProduct(testProduct2));
     }
 
     @Test
-    void removeProductShouldDecreaseProductCountWhenProductWasRemoved() {
-        ProductRepository productRepository = new ProductRepository();
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .build();
-
-        Product addedProduct = productRepository.addProduct(product);
-
-        Product product2 = ProductBuilder.builder()
-                .name("Fanta")
-                .build();
-
-        Product addedProduct2 = productRepository.addProduct(product2);
-
-        productRepository.removeProduct(addedProduct);
-
+    void removeProduct_shouldDecreaseProductCount_whenProductWasRemoved() {
+        Product addedProduct1 = productRepository.addProduct(testProduct1);
+        productRepository.addProduct(testProduct2);
+        productRepository.removeProduct(addedProduct1);
         assertThat(productRepository.countProducts()).isEqualTo(1);
     }
 
     @Test
-    void removeProductWithIdShouldThrowIllegalArgumentExceptionWhenProductIsNull() {
-        ProductRepository productRepository = new ProductRepository();
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.removeProductWithId(null);
-        });
+    void removeProductWithId_shouldThrowIllegalArgumentException_whenProductIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProductWithId(null));
     }
 
     @Test
-    void removeProductWithIdShouldThrowIllegalArgumentExceptionWhenProductIsNotFound() {
-        ProductRepository productRepository = new ProductRepository();
-
-        Product product = ProductBuilder.builder()
-                .name("Cola").build();
-
-        productRepository.addProduct(product);
-
-        Product product2 = ProductBuilder.builder()
-                .name("Fanta").build();
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.removeProductWithId(product2.id());
-        });
+    void removeProductWithId_shouldThrowIllegalArgumentException_whenProductIsNotFound() {
+        productRepository.addProduct(testProduct1);
+        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProductWithId(testProduct2.id()));
     }
 
     @Test
-    void removeProductWithIdShouldDecreaseProductCountWhenProductWasRemoved() {
-        ProductRepository productRepository = new ProductRepository();
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .build();
-
-        Product addedProduct = productRepository.addProduct(product);
-
-        Product product2 = ProductBuilder.builder()
-                .name("Fanta")
-                .build();
-
-        Product addedProduct2 = productRepository.addProduct(product2);
-
-        productRepository.removeProductWithId(addedProduct.id());
-
+    void removeProductWithId_shouldDecreaseProductCount_whenProductWasRemoved() {
+        Product addedProduct1 = productRepository.addProduct(testProduct1);
+        productRepository.addProduct(testProduct2);
+        productRepository.removeProductWithId(addedProduct1.id());
         assertThat(productRepository.countProducts()).isEqualTo(1);
     }
 
     @Test
-    void findShouldThrowIllegalArgumentExceptionWhenIdIsNull() {
-        ProductRepository productRepository = new ProductRepository();
-        assertThrows(IllegalArgumentException.class, () -> {
-            productRepository.find(null);
-        });
+    void find_shouldThrowIllegalArgumentException_whenIdIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> productRepository.find(null));
     }
 
     @Test
-    void findShouldReturnNullWhenIdIsNotInRepository() {
-        ProductRepository productRepository = new ProductRepository();
-
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .build();
-
-        Product addedProduct = productRepository.addProduct(product);
-
+    void find_shouldReturnNull_whenIdIsNotInRepository() {
+        productRepository.addProduct(testProduct1);
         assertThat(productRepository.find("xxxxxxx")).isNull();
     }
 
     @Test
-    void findShouldReturnProductWhenIdIsInRepository() {
-        ProductRepository productRepository = new ProductRepository();
-
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .build();
-        Product addedProduct = productRepository.addProduct(product);
-
-
-        Product product2 = ProductBuilder.builder()
-                .name("Fanta")
-                .build();
-        Product addedProduct2 = productRepository.addProduct(product);
-
-        assertThat(productRepository.find(addedProduct.id())).isEqualTo(addedProduct);
+    void find_shouldReturnProduct_whenIdIsInRepository() {
+        Product addedProduct1 = productRepository.addProduct(testProduct1);
+        productRepository.addProduct(testProduct2);
+        assertThat(productRepository.find(addedProduct1.id())).isEqualTo(addedProduct1);
     }
 
     @Test
-    void findAll() {
-        ProductRepository productRepository = new ProductRepository();
+    void findAll_shouldReturnAllProducts() {
+        Product addedProduct1 = productRepository.addProduct(testProduct1);
+        Product addedProduct2 = productRepository.addProduct(testProduct2);
+        List<Product> allProducts = productRepository.findAll();
+        assertThat(allProducts).hasSize(2);
+        assertThat(allProducts).containsExactlyInAnyOrder(addedProduct1, addedProduct2);
+    }
 
-        Product product = ProductBuilder.builder()
-                .name("Coca-Cola")
-                .build();
-        Product addedProduct = productRepository.addProduct(product);
-
-
-        Product product2 = ProductBuilder.builder()
-                .name("Fanta")
-                .build();
-        Product addedProduct2 = productRepository.addProduct(product);
-
-        assertThat(productRepository.findAll()).hasSize(2);
+    @Test
+    void findAll_shouldReturnEmptyList_whenNoProducts() {
+        List<Product> allProducts = productRepository.findAll();
+        assertThat(allProducts).isEmpty();
     }
 }

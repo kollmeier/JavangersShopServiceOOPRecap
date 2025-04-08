@@ -1,6 +1,7 @@
 package ckollmeier.de.Repository;
 
 import ckollmeier.de.Entity.Product;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +46,9 @@ public final class ProductRepository {
     public Product removeProduct(final Product product) {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
+        }
+        if (product.id() == null) {
+            throw new IllegalArgumentException("Product id cannot be null");
         }
         return removeProductWithId(product.id());
     }

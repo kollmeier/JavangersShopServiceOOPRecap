@@ -25,6 +25,10 @@ public class StockRepositoryTest {
         product = mock(ProductInterface.class);
         when(product.id()).thenReturn("prod-1");
         when(product.productId()).thenReturn("prod-1");
+        when(product.name()).thenReturn("Test Product");
+        when(product.description()).thenReturn("Test Description");
+        when(product.content()).thenReturn(BigDecimal.TEN.setScale(2, RoundingMode.HALF_UP));
+        when(product.unit()).thenReturn(UnitEnum.KG);
 
         stockRepository.addProduct(product, new BigDecimal("10.0"), UnitEnum.KG, new BigDecimal("19.99"));
     }
@@ -70,6 +74,10 @@ public class StockRepositoryTest {
         ProductInterface otherProduct = mock(ProductInterface.class);
         when(otherProduct.id()).thenReturn("other-prod");
         when(otherProduct.productId()).thenReturn("other-prod");
+        when(otherProduct.name()).thenReturn("Test Product");
+        when(otherProduct.description()).thenReturn("Test Description");
+        when(otherProduct.content()).thenReturn(BigDecimal.TEN.setScale(2, RoundingMode.HALF_UP));
+        when(otherProduct.unit()).thenReturn(UnitEnum.KG);
         StockArticle updated = stockRepository.increaseQuantity(otherProduct, new BigDecimal("5.0"), UnitEnum.KG);
         assertThat(stockRepository.isInStock(otherProduct)).isTrue();
         assertThat(new BigDecimal("5.0").setScale(updated.quantity().scale(), RoundingMode.HALF_UP)).isEqualTo(updated.quantity());
@@ -147,6 +155,10 @@ public class StockRepositoryTest {
         ProductInterface newProduct = mock(ProductInterface.class);
         when(newProduct.id()).thenReturn("prod-2");
         when(newProduct.productId()).thenReturn("prod-2");
+        when(newProduct.name()).thenReturn("Test Product");
+        when(newProduct.description()).thenReturn("Test Description");
+        when(newProduct.content()).thenReturn(BigDecimal.TEN.setScale(2, RoundingMode.HALF_UP));
+        when(newProduct.unit()).thenReturn(UnitEnum.KG);
 
         StockArticle added = stockRepository.addProduct(newProduct, new BigDecimal("5.0"), UnitEnum.L, new BigDecimal("10.99"));
 

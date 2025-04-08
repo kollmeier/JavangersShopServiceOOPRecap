@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -41,10 +42,11 @@ class OrderRepositoryTest {
 
     @Test
     void addOrder_shouldGenerateIdAndReturnOrder() {
-        Order added = orderRepository.addOrder(testOrder1);
+        Order added = orderRepository.addOrder(testOrder1.withId(null));
 
         assertNotNull(added);
         assertNotNull(added.id());
+        assertThat(added.id()).matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
         assertEquals(testProducts, added.products());
     }
 
@@ -62,6 +64,16 @@ class OrderRepositoryTest {
     }
 
     @Test
+    void addOrder_shouldAddOrderWithUnchangedIdWhenOrderHasId() {
+        Order orderWithId = OrderBuilder.builder().id("predefined-id").products(testProducts).build();
+        Order added = orderRepository.addOrder(orderWithId);
+
+        assertNotNull(added);
+        assertEquals("predefined-id", added.id());
+        assertEquals(testProducts, added.products());
+    }
+
+    @Test
     void removeOrder_shouldRemoveSuccessfully() {
         Order added = orderRepository.addOrder(testOrder1);
         Order removed = orderRepository.removeOrder(added);
@@ -74,6 +86,22 @@ class OrderRepositoryTest {
     void removeOrder_shouldThrowWhenNull() {
         Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.removeOrder(null));
         assertEquals("Order cannot be null", e.getMessage());
+    }
+
+    @Test
+    void removeOrder_shouldThrowExceptionWhenOrderNotFound() {
+        Order order = OrderBuilder.builder().id("non-existing-id").products(testProducts).build();
+        Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.removeOrder(order));
+        assertEquals("Order with id " + order.id() + " not found", e.getMessage());
+    }
+
+    @Test
+    void removeOrderWithId_shouldRemoveSuccessfully() {
+        Order added = orderRepository.addOrder(testOrder1);
+        Order removed = orderRepository.removeOrderWithId(added.id());
+
+        assertEquals(added.id(), removed.id());
+        assertNull(orderRepository.find(added.id()));
     }
 
     @Test
@@ -95,6 +123,7 @@ class OrderRepositoryTest {
         Order found = orderRepository.find(added.id());
 
         assertEquals(added.id(), found.id());
+        assertEquals(added.products(), found.products());
     }
 
     @Test
@@ -115,6 +144,13 @@ class OrderRepositoryTest {
         orderRepository.addOrder(testOrder2);
         Collection<Order> orders = orderRepository.findAll();
         assertEquals(2, orders.size());
+        assertThat(orders).containsExactlyInAnyOrder(testOrder1, testOrder2);
+    }
+
+    @Test
+    void findAll_shouldReturnEmptyListWhenNoOrders() {
+        Collection<Order> orders = orderRepository.findAll();
+        assertThat(orders).isEmpty();
     }
 
     @Test
@@ -123,5 +159,14 @@ class OrderRepositoryTest {
         orderRepository.addOrder(testOrder1);
         orderRepository.addOrder(testOrder2);
         assertEquals(2, orderRepository.countOrders());
+    }
+    @Test
+    void countOrders_shouldReturnCorrectCountAfterRemove() {
+        assertEquals(0, orderRepository.countOrders());
+        Order added = orderRepository.addOrder(testOrder1);
+        orderRepository.addOrder(testOrder2);
+        assertEquals(2, orderRepository.countOrders());
+        orderRepository.removeOrder(added);
+        assertEquals(1, orderRepository.countOrders());
     }
 }
