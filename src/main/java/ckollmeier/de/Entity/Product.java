@@ -1,5 +1,6 @@
 package ckollmeier.de.Entity;
 
+import ckollmeier.de.Entity.Interface.ProductInterface;
 import ckollmeier.de.Enum.UnitEnum;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
@@ -12,5 +13,9 @@ public record Product(
         BigDecimal content,
         UnitEnum unit,
         String description
-) implements ProductBuilder.With {
+) implements ProductBuilder.With, ProductInterface {
+    @Override
+    public String productId() {
+        return id;
+    }
 }
