@@ -39,7 +39,14 @@ public final class StockRepository {
         return stockArticle;
     }
 
+    /**
+     * @param product product to check against
+     * @return true if in stock
+     */
     public boolean isInStock(final ProductInterface product) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product cannot be null");
+        }
         return stockArticlesByProductId.containsKey(product.id());
     }
 
@@ -50,6 +57,15 @@ public final class StockRepository {
      * @return true if enough in stock
      */
     public boolean isSufficientInStock(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product cannot be null");
+        }
+        if (quantity == null) {
+            throw new IllegalArgumentException("Quantity cannot be null");
+        }
+        if (unit == null) {
+            throw new IllegalArgumentException("Unit cannot be null");
+        }
         if (!stockArticlesByProductId.containsKey(product.productId())) {
             return false;
         }
@@ -80,7 +96,21 @@ public final class StockRepository {
         }
         StockArticle stockArticle = stockArticlesByProductId.get(product.id());
         if (stockArticle == null) {
-            throw new IllegalArgumentException("Product " + product.id() + " does not exist");
+            stockArticle = stockArticleWithId(
+                    StockArticleBuilder.builder()
+                            .product(ProductBuilder.builder()
+                                    .id(product.productId())
+                                    .name(product.name())
+                                    .description(product.description())
+                                    .content(product.content())
+                                    .unit(product.unit())
+                                    .build())
+                            .quantity(BigDecimal.ZERO)
+                            .unit(unit)
+                            .price(BigDecimal.ZERO) // Default price, can be updated later
+                            .build()
+            );
+            addProduct(stockArticle);
         }
         return updateStockArticle(
                 stockArticle.withQuantity(
@@ -107,6 +137,9 @@ public final class StockRepository {
         }
         if (unit == null) {
             throw new IllegalArgumentException("Unit cannot be null");
+        }
+        if (quantity.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
         }
         StockArticle stockArticle = stockArticlesByProductId.get(product.id());
         if (stockArticle == null) {
