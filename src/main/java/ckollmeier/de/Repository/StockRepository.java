@@ -1,5 +1,6 @@
 package ckollmeier.de.Repository;
 
+import ckollmeier.de.Entity.Interface.ProductInterface;
 import ckollmeier.de.Entity.Product;
 import ckollmeier.de.Entity.StockArticle;
 import ckollmeier.de.Enum.UnitEnum;
@@ -24,13 +25,33 @@ public final class StockRepository {
         return stockArticle;
     }
 
+    public boolean isInStock(final ProductInterface product) {
+        return stockArticlesByProductId.containsKey(product.id());
+    }
+
+    /**
+     * @param product product to check against
+     * @param quantity needed quantity
+     * @param unit unit of the quantity
+     * @return true if enough in stock
+     */
+    public boolean isSufficientInStock(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
+        if (!stockArticlesByProductId.containsKey(product.id())) {
+            return false;
+        }
+        StockArticle stockArticle = stockArticlesByProductId.get(product.productId());
+        BigDecimal convertedQuantity = quantity.multiply(stockArticle.unit().conversionFactor(unit));
+
+        return convertedQuantity.compareTo(stockArticle.quantity()) >= 0;
+    }
+
     /**
      * @param product  product to increase the quantity
      * @param quantity quantity in amounts of unit
      * @param unit     unit of the added amount
      * @return product with increased quantity
      */
-    public StockArticle increaseQuantity(final Product product, final BigDecimal quantity, final UnitEnum unit) {
+    public StockArticle increaseQuantity(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }
@@ -63,7 +84,7 @@ public final class StockRepository {
      * @param unit     unit of the added amount
      * @return product with decreased quantity
      */
-    public StockArticle decreaseQuantity(final Product product, final BigDecimal quantity, final UnitEnum unit) {
+    public StockArticle decreaseQuantity(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }

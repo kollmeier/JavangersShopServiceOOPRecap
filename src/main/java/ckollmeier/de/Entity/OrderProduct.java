@@ -17,23 +17,29 @@ public final class OrderProduct implements ProductInterface {
     /**
      * quantity to order.
      */
-    private int quantity;
+    private BigDecimal quantity;
     /**
      * price sum.
      */
     private BigDecimal priceSubTotal;
 
 
-    public void setQuantity(final int quantity) {
+    public void setQuantity(final BigDecimal quantity) {
         this.quantity = quantity;
-        this.priceSubTotal = stockArticle.price().multiply(new BigDecimal(quantity));
+        this.priceSubTotal = stockArticle.price().multiply(quantity);
+    }
+
+    public void setQuantity(final BigDecimal newQuantity, final UnitEnum unit) {
+        BigDecimal factor = stockArticle.unit().conversionFactor(unit);
+        BigDecimal convertedQuantity = newQuantity.multiply(factor);
+        setQuantity(convertedQuantity);
     }
 
     public StockArticle getStockArticle() {
         return stockArticle;
     }
 
-    public int getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity;
     }
 

@@ -7,6 +7,6 @@ import java.util.List;
 @RecordBuilder
 public record Order(
         String id,
-        List<Product> products
+        List<OrderProduct> products
 ) implements OrderBuilder.With {
 }
