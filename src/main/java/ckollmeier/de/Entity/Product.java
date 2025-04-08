@@ -9,11 +9,8 @@ import java.math.BigDecimal;
 public record Product(
         String id,
         String name,
-        BigDecimal quantity,
-        UnitEnum unit,
         BigDecimal content,
-        UnitEnum contentUnit,
-        BigDecimal price,
+        UnitEnum unit,
         String description
 ) implements ProductBuilder.With {
 }

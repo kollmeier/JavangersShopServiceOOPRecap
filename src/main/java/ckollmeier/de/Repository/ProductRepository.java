@@ -1,9 +1,6 @@
 package ckollmeier.de.Repository;
 
 import ckollmeier.de.Entity.Product;
-import ckollmeier.de.Enum.UnitEnum;
-
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -86,84 +83,6 @@ public final class ProductRepository {
 
     public List<Product> findAll() {
         return products;
-    }
-
-    /**
-     * @param product product to increase the quantity
-     * @param quantity quantity in amounts of unit
-     * @param unit unit of the added amount
-     * @return product with increased quantity
-     */
-    public Product increaseQuantity(final Product product, final BigDecimal quantity, final UnitEnum unit) {
-        if (product == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (quantity == null) {
-            throw new IllegalArgumentException("Quantity cannot be null");
-        }
-        if (unit == null) {
-            throw new IllegalArgumentException("Unit cannot be null");
-        }
-        Product found = removeProduct(product);
-        return addProduct(found.withQuantity(
-                found.quantity().add(quantity.multiply(found.unit().conversionFactor(unit)))
-        ));
-    }
-
-    /**
-     * @param product product to decrease the quantity
-     * @param quantity quantity in amounts of unit
-     * @param unit unit of the added amount
-     * @return product with decreased quantity
-     */
-    public Product decreaseQuantity(final Product product, final BigDecimal quantity, final UnitEnum unit) {
-        if (product == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (quantity == null) {
-            throw new IllegalArgumentException("Quantity cannot be null");
-        }
-        if (unit == null) {
-            throw new IllegalArgumentException("Unit cannot be null");
-        }
-        Product found = removeProduct(product);
-        return addProduct(found.withQuantity(
-                found.quantity().subtract(quantity.multiply(found.unit().conversionFactor(unit)))
-        ));
-    }
-
-    /**
-     * @param productId productId to increase the quantity
-     * @param quantity quantity in amounts of unit
-     * @param unit unit of the added amount
-     * @return product with increased quantity
-     */
-    public Product increaseQuantityById(final String productId, final BigDecimal quantity, final UnitEnum unit) {
-        if (productId == null) {
-            throw new IllegalArgumentException("Product id cannot be null");
-        }
-        Product product = find(productId);
-        if (product == null) {
-            throw new IllegalArgumentException("Product not found");
-        }
-        return increaseQuantity(product, quantity, unit);
-    }
-
-    /**
-     * @param productId productId to decrease the quantity
-     * @param quantity quantity in amounts of unit
-     * @param unit unit of the decreased amount
-     * @return product with decreased quantity
-     */
-    public Product decreaseQuantityById(final String productId, final BigDecimal quantity, final UnitEnum unit) {
-        if (productId == null) {
-            throw new IllegalArgumentException("Product id cannot be null");
-        }
-        Product product = find(productId);
-        if (product == null) {
-            throw new IllegalArgumentException("Product not found");
-        }
-        return decreaseQuantity(product, quantity, unit);
     }
 
     public int countProducts() {
