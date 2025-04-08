@@ -51,7 +51,7 @@ public final class OrderRepository {
     }
 
     /**
-     * @param orderId id of the order to rremove from list
+     * @param orderId id of the order to remove from list
      * @return the removed order
      */
     public Order removeOrderWithId(final String orderId) {
