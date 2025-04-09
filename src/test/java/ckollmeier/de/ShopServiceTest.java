@@ -175,6 +175,12 @@ class ShopServiceTest {
     }
 
     @Test
+    void addProduct_NullProduct_ThrowsIllegalArgumentException() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> shopService.addProduct(null));
+    }
+
+    @Test
     void removeProduct_ValidProduct_ProductRemoved() {
         // Arrange
         Product product = ProductBuilder.builder().id(UUID.randomUUID().toString()).name("Test Product").build();
@@ -187,6 +193,16 @@ class ShopServiceTest {
         assertNotNull(result);
         assertEquals(product.id(), result.id());
         verify(productRepository, times(1)).removeProduct(product);
+    }
+
+    @Test
+    void removeProduct_NonExistingProduct_ThrowsIllegalArgumentException() {
+        // Arrange
+        Product product = ProductBuilder.builder().id(UUID.randomUUID().toString()).name("Non-Existing Product").build();
+        when(productRepository.find(product.id())).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> shopService.removeProduct(product));
     }
 
     @Test
@@ -230,6 +246,12 @@ class ShopServiceTest {
         assertNotNull(result);
         assertEquals(product.id(), result.productId());
         verify(stockRepository, times(1)).addProduct(product, quantity, unit, price);
+    }
+
+    @Test
+    void addStock_NullProduct_ThrowsIllegalArgumentException() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> shopService.addStock(null, BigDecimal.ONE, UnitEnum.PCS, BigDecimal.TEN));
     }
 
     @Test
@@ -280,6 +302,19 @@ class ShopServiceTest {
         assertNotNull(result);
         assertEquals(product.id(), result.productId());
         verify(stockRepository, times(1)).decreaseQuantity(product, quantity, unit);
+    }
+
+    @Test
+    void decreaseStock_InsufficientStock_ThrowsIllegalArgumentException() {
+        // Arrange
+        Product product = ProductBuilder.builder().id(UUID.randomUUID().toString()).name("Product 1").build();
+        BigDecimal quantity = BigDecimal.TEN;
+        UnitEnum unit = UnitEnum.PCS;
+
+        when(stockRepository.isSufficientInStock(product, quantity, unit)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> shopService.decreaseStock(product, quantity, unit));
     }
 
     @Test
