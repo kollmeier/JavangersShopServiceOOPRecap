@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import ckollmeier.de.ValidationUtils;
 import lombok.NonNull;
 
 public final class ProductRepository {
@@ -28,7 +29,7 @@ public final class ProductRepository {
      * @return the added product
      */
     public Product addProduct(final @NonNull Product product) {
-        Product productWithId = productWithId(product);
+        Product productWithId = ValidationUtils.validated(productWithId(product));
         if (find(productWithId.id()).isPresent()) {
             throw new IllegalArgumentException("Product with id " + productWithId.id() + " already exists");
         }

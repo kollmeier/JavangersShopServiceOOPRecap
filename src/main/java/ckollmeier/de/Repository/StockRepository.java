@@ -7,6 +7,8 @@ import ckollmeier.de.Entity.StockArticle;
 import ckollmeier.de.Entity.StockArticleBuilder;
 import ckollmeier.de.Enum.UnitEnum;
 
+import ckollmeier.de.ValidationUtils;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.NonNull;
 
 import java.math.BigDecimal;
@@ -16,24 +18,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class StockRepository {
-    /**
-     * Articles in stock.
-     */
     private final Map<String, StockArticle> stockArticles = new HashMap<>();
-    /**
-     * Articles in stock indexed by product id.
-     */
     private final Map<String, StockArticle> stockArticlesByProductId = new HashMap<>();
 
     private StockArticle stockArticleWithId(final @NonNull StockArticle stockArticle) {
-        if (stockArticle.id() != null) {
-            return stockArticle;
-        }
         String id = UUID.randomUUID().toString();
-        return stockArticle.withId(id);
+        return ValidationUtils.validated(stockArticle.withId(id));
     }
 
     private StockArticle updateStockArticle(final @NonNull StockArticle stockArticle) {
+        ValidationUtils.validate(stockArticle);
         stockArticles.replace(stockArticle.id(), stockArticle);
         stockArticlesByProductId.put(stockArticle.product().id(), stockArticle);
         return stockArticle;
@@ -53,7 +47,8 @@ public final class StockRepository {
      * @param unit unit of the quantity
      * @return true if enough in stock
      */
-    public boolean isSufficientInStock(final @NonNull ProductInterface product, final @NonNull BigDecimal quantity, final @NonNull UnitEnum unit) {
+    public boolean isSufficientInStock(final @NonNull ProductInterface product, final @NonNull @PositiveOrZero BigDecimal quantity, final @NonNull UnitEnum unit) {
+        ValidationUtils.validate(quantity);
         Optional<StockArticle> optionalStockArticle = findByProductId(product.productId());
         if (optionalStockArticle.isEmpty()) {
             return false;
@@ -71,9 +66,7 @@ public final class StockRepository {
      * @return product with increased quantity
      */
     public StockArticle increaseQuantity(final @NonNull ProductInterface product, final @NonNull BigDecimal quantity, final @NonNull UnitEnum unit) {
-        if (quantity.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero");
-        }
+        ValidationUtils.validate(quantity);
         StockArticle stockArticle = findByProductId(product.id()).orElseGet(
                 () -> addProduct(
                         stockArticleWithId(
@@ -126,11 +119,11 @@ public final class StockRepository {
         );
     }
 
-    public Optional<StockArticle> find(final String id) {
+    public Optional<StockArticle> find(final @NonNull String id) {
         return Optional.ofNullable(stockArticles.get(id));
     }
 
-    public Optional<StockArticle> findByProductId(final String productId) {
+    public Optional<StockArticle> findByProductId(final @NonNull String productId) {
         return Optional.ofNullable(stockArticlesByProductId.get(productId));
     }
 
@@ -166,7 +159,7 @@ public final class StockRepository {
      * @return the added stock article
      * @throws IllegalArgumentException if the product is null, quantity is less than zero, or product already exists
      */
-    public StockArticle addProduct(final @NonNull ProductInterface product, final @NonNull BigDecimal quantity, final @NonNull UnitEnum unit, final @NonNull BigDecimal price) {
+    public StockArticle addProduct(final @NonNull ProductInterface product, final @NonNull @PositiveOrZero BigDecimal quantity, final @NonNull UnitEnum unit, final @NonNull BigDecimal price) {
         if (quantity.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Quantity must be non-negative");
         }

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import ckollmeier.de.ValidationUtils;
 import lombok.NonNull;
 
 public final class OrderRepository {
@@ -29,7 +30,7 @@ public final class OrderRepository {
      * @return the added order
      */
     public Optional<Order> addOrder(final @NonNull Order order) {
-        Order orderWithId = orderWithId(order);
+        Order orderWithId = ValidationUtils.validated(orderWithId(order));
         if (find(orderWithId.id()).isPresent()) {
             throw new IllegalArgumentException("Order with id " + orderWithId.id() + " already exists");
         }

@@ -61,6 +61,7 @@ public class StockRepositoryTest {
     void isSufficientInStock_shouldReturnFalse_whenProductNotInStock() {
         ProductInterface otherProduct = mock(ProductInterface.class);
         when(otherProduct.id()).thenReturn("other-prod");
+        when(otherProduct.productId()).thenReturn("other-prod");
         assertFalse(stockRepository.isSufficientInStock(otherProduct, new BigDecimal("1.0"), UnitEnum.KG));
     }
 

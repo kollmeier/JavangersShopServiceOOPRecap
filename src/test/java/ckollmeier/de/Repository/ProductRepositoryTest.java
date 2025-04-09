@@ -2,9 +2,11 @@ package ckollmeier.de.Repository;
 
 import ckollmeier.de.Entity.Product;
 import ckollmeier.de.Entity.ProductBuilder;
+import ckollmeier.de.Enum.UnitEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -19,8 +21,18 @@ class ProductRepositoryTest {
     @BeforeEach
     void setUp() {
         productRepository = new ProductRepository();
-        testProduct1 = ProductBuilder.builder().name("Coca-Cola").build();
-        testProduct2 = ProductBuilder.builder().name("Fanta").build();
+        testProduct1 = ProductBuilder.builder()
+                .name("Coca-Cola")
+                .description("")
+                .content(BigDecimal.ONE)
+                .unit(UnitEnum.L)
+                .build();
+        testProduct2 = ProductBuilder.builder()
+                .name("Fanta")
+                .description("")
+                .content(BigDecimal.TWO)
+                .unit(UnitEnum.L)
+                .build();
     }
 
     @Test

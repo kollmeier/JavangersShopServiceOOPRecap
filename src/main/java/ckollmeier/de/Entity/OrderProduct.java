@@ -2,53 +2,31 @@ package ckollmeier.de.Entity;
 
 import ckollmeier.de.Entity.Interface.ProductInterface;
 import ckollmeier.de.Enum.UnitEnum;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
+@Getter
+@RequiredArgsConstructor
 public final class OrderProduct implements ProductInterface {
-    /**
-     * unique id.
-     */
-    private String id;
-    /**
-     * article to order.
-     */
-    private StockArticle stockArticle;
-    /**
-     * quantity to order.
-     */
-    private BigDecimal quantity;
-    /**
-     * price sum.
-     */
-    private BigDecimal priceSubTotal;
+    private @NotBlank(message = "Id must not be empty") String id;
 
+    private final @NotNull(message = "StockArticle must not be null") StockArticle stockArticle;
 
-    public void setQuantity(final BigDecimal quantity) {
-        this.quantity = quantity;
-        this.priceSubTotal = stockArticle.price().multiply(quantity);
-    }
+    @Setter
+    private @PositiveOrZero(message = "Quantity must be positive") BigDecimal quantity;
+
+    private @PositiveOrZero(message = "Price must be positive") BigDecimal priceSubTotal;
 
     public void setQuantity(final BigDecimal newQuantity, final UnitEnum unit) {
         BigDecimal factor = stockArticle.unit().conversionFactor(unit);
         BigDecimal convertedQuantity = newQuantity.multiply(factor);
         setQuantity(convertedQuantity);
-    }
-
-    public StockArticle getStockArticle() {
-        return stockArticle;
-    }
-
-    public BigDecimal getQuantity() {
-        return quantity;
-    }
-
-    public BigDecimal getPriceSubTotal() {
-        return priceSubTotal;
-    }
-
-    public OrderProduct(final StockArticle stockArticle) {
-        this.stockArticle = stockArticle;
     }
 
     @Override
