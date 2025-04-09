@@ -7,9 +7,12 @@ import ckollmeier.de.Entity.StockArticle;
 import ckollmeier.de.Entity.StockArticleBuilder;
 import ckollmeier.de.Enum.UnitEnum;
 
+import lombok.NonNull;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public final class StockRepository {
@@ -22,10 +25,7 @@ public final class StockRepository {
      */
     private final Map<String, StockArticle> stockArticlesByProductId = new HashMap<>();
 
-    private StockArticle stockArticleWithId(final StockArticle stockArticle) {
-        if (stockArticle == null) {
-            throw new IllegalArgumentException("StockArticle cannot be null");
-        }
+    private StockArticle stockArticleWithId(final @NonNull StockArticle stockArticle) {
         if (stockArticle.id() != null) {
             return stockArticle;
         }
@@ -33,7 +33,7 @@ public final class StockRepository {
         return stockArticle.withId(id);
     }
 
-    private StockArticle updateStockArticle(final StockArticle stockArticle) {
+    private StockArticle updateStockArticle(final @NonNull StockArticle stockArticle) {
         stockArticles.replace(stockArticle.id(), stockArticle);
         stockArticlesByProductId.put(stockArticle.product().id(), stockArticle);
         return stockArticle;
@@ -43,11 +43,8 @@ public final class StockRepository {
      * @param product product to check against
      * @return true if in stock
      */
-    public boolean isInStock(final ProductInterface product) {
-        if (product == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        return stockArticlesByProductId.containsKey(product.id());
+    public boolean isInStock(final @NonNull ProductInterface product) {
+        return findByProductId(product.id()).isPresent();
     }
 
     /**
@@ -56,20 +53,12 @@ public final class StockRepository {
      * @param unit unit of the quantity
      * @return true if enough in stock
      */
-    public boolean isSufficientInStock(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
-        if (product == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (quantity == null) {
-            throw new IllegalArgumentException("Quantity cannot be null");
-        }
-        if (unit == null) {
-            throw new IllegalArgumentException("Unit cannot be null");
-        }
-        if (!stockArticlesByProductId.containsKey(product.productId())) {
+    public boolean isSufficientInStock(final @NonNull ProductInterface product, final @NonNull BigDecimal quantity, final @NonNull UnitEnum unit) {
+        Optional<StockArticle> optionalStockArticle = findByProductId(product.productId());
+        if (optionalStockArticle.isEmpty()) {
             return false;
         }
-        StockArticle stockArticle = stockArticlesByProductId.get(product.productId());
+        StockArticle stockArticle = optionalStockArticle.get();
         BigDecimal convertedQuantity = quantity.multiply(stockArticle.unit().conversionFactor(unit));
 
         return stockArticle.quantity().compareTo(convertedQuantity) >= 0;
@@ -81,37 +70,28 @@ public final class StockRepository {
      * @param unit     unit of the added amount
      * @return product with increased quantity
      */
-    public StockArticle increaseQuantity(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
-        if (product == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (quantity == null) {
-            throw new IllegalArgumentException("Quantity cannot be null");
-        }
-        if (unit == null) {
-            throw new IllegalArgumentException("Unit cannot be null");
-        }
+    public StockArticle increaseQuantity(final @NonNull ProductInterface product, final @NonNull BigDecimal quantity, final @NonNull UnitEnum unit) {
         if (quantity.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
-        StockArticle stockArticle = stockArticlesByProductId.get(product.id());
-        if (stockArticle == null) {
-            stockArticle = stockArticleWithId(
-                    StockArticleBuilder.builder()
-                            .product(ProductBuilder.builder()
-                                    .id(product.productId())
-                                    .name(product.name())
-                                    .description(product.description())
-                                    .content(product.content())
-                                    .unit(product.unit())
-                                    .build())
-                            .quantity(BigDecimal.ZERO)
-                            .unit(unit)
-                            .price(BigDecimal.ZERO) // Default price, can be updated later
-                            .build()
-            );
-            addProduct(stockArticle);
-        }
+        StockArticle stockArticle = findByProductId(product.id()).orElseGet(
+                () -> addProduct(
+                        stockArticleWithId(
+                                StockArticleBuilder.builder()
+                                        .product(ProductBuilder.builder()
+                                                .id(product.productId())
+                                                .name(product.name())
+                                                .description(product.description())
+                                                .content(product.content())
+                                                .unit(product.unit())
+                                                .build())
+                                        .quantity(BigDecimal.ZERO)
+                                        .unit(unit)
+                                        .price(BigDecimal.ZERO) // Default price, can be updated later
+                                        .build()
+                        )
+                )
+        );
         return updateStockArticle(
                 stockArticle.withQuantity(
                         stockArticle.quantity()
@@ -128,23 +108,12 @@ public final class StockRepository {
      * @param unit     unit of the added amount
      * @return product with decreased quantity
      */
-    public StockArticle decreaseQuantity(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
-        if (product == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (quantity == null) {
-            throw new IllegalArgumentException("Quantity cannot be null");
-        }
-        if (unit == null) {
-            throw new IllegalArgumentException("Unit cannot be null");
-        }
+    public StockArticle decreaseQuantity(final @NonNull ProductInterface product, final @NonNull BigDecimal quantity, final @NonNull UnitEnum unit) {
         if (quantity.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
-        StockArticle stockArticle = stockArticlesByProductId.get(product.id());
-        if (stockArticle == null) {
-            throw new IllegalArgumentException("Product " + product.id() + " does not exist");
-        }
+        StockArticle stockArticle = findByProductId(product.id())
+                .orElseThrow(() -> new IllegalArgumentException("Product " + product.id() + " does not exist"));
         BigDecimal decreasedQuantity = quantity.multiply(stockArticle.unit().conversionFactor(unit));
         if (stockArticle.quantity().compareTo(decreasedQuantity) <= 0) {
             throw new IllegalArgumentException("Not enough stock quantity");
@@ -157,12 +126,12 @@ public final class StockRepository {
         );
     }
 
-    public StockArticle find(final String id) {
-        return stockArticles.get(id);
+    public Optional<StockArticle> find(final String id) {
+        return Optional.ofNullable(stockArticles.get(id));
     }
 
-    public StockArticle findByProductId(final String productId) {
-        return stockArticlesByProductId.get(productId);
+    public Optional<StockArticle> findByProductId(final String productId) {
+        return Optional.ofNullable(stockArticlesByProductId.get(productId));
     }
 
 
@@ -173,10 +142,7 @@ public final class StockRepository {
      * @return the added stock article
      * @throws IllegalArgumentException if stockArticle is null or already exists
      */
-    public StockArticle addProduct(final StockArticle stockArticle) {
-        if (stockArticle == null) {
-            throw new IllegalArgumentException("StockArticle cannot be null");
-        }
+    public StockArticle addProduct(final @NonNull StockArticle stockArticle) {
         if (stockArticles.containsKey(stockArticle.id())) {
             throw new IllegalArgumentException("StockArticle with id " + stockArticle.id() + " already exists");
         }
@@ -200,17 +166,11 @@ public final class StockRepository {
      * @return the added stock article
      * @throws IllegalArgumentException if the product is null, quantity is less than zero, or product already exists
      */
-    public StockArticle addProduct(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit, final BigDecimal price) {
-        if (product == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) < 0) {
+    public StockArticle addProduct(final @NonNull ProductInterface product, final @NonNull BigDecimal quantity, final @NonNull UnitEnum unit, final @NonNull BigDecimal price) {
+        if (quantity.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Quantity must be non-negative");
         }
-        if (unit == null) {
-            throw new IllegalArgumentException("Unit cannot be null");
-        }
-        if (price == null || price.compareTo(BigDecimal.ZERO) < 0) {
+        if (price.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Price must be non-negative");
         }
 

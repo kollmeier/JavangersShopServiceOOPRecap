@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,100 +43,109 @@ class OrderRepositoryTest {
 
     @Test
     void addOrder_shouldGenerateIdAndReturnOrder() {
-        Order added = orderRepository.addOrder(testOrder1.withId(null));
+        Optional<Order> added = orderRepository.addOrder(testOrder1.withId(null));
 
-        assertNotNull(added);
-        assertNotNull(added.id());
-        assertThat(added.id()).matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-        assertEquals(testProducts, added.products());
+        assertThat( added ).isPresent();
+        assertThat(added.get().id()).matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+        assertEquals(testProducts, added.get().products());
     }
 
     @Test
     void addOrder_shouldThrowExceptionWhenOrderIsNull() {
-        Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.addOrder(null));
-        assertEquals("Order cannot be null", e.getMessage());
+        Exception e = assertThrows(NullPointerException.class, () -> orderRepository.addOrder(null));
     }
 
     @Test
     void addOrder_shouldThrowExceptionWhenDuplicateId() {
-        Order added = orderRepository.addOrder(testOrder1);
+        Optional<Order> addedOptional = orderRepository.addOrder(testOrder1);
+        assertThat(addedOptional).isPresent();
+        Order added = addedOptional.get();
         Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.addOrder(added));
         assertEquals("Order with id " + added.id() + " already exists", e.getMessage());
     }
 
     @Test
     void addOrder_shouldAddOrderWithUnchangedIdWhenOrderHasId() {
-        Order orderWithId = OrderBuilder.builder().id("predefined-id").products(testProducts).build();
-        Order added = orderRepository.addOrder(orderWithId);
+        Optional<Order> addedOptional = orderRepository.addOrder(testOrder1.withId("predefined-id"));
+        assertThat(addedOptional).isPresent();
+        Order added = addedOptional.get();
 
-        assertNotNull(added);
         assertEquals("predefined-id", added.id());
         assertEquals(testProducts, added.products());
     }
 
     @Test
     void removeOrder_shouldRemoveSuccessfully() {
-        Order added = orderRepository.addOrder(testOrder1);
-        Order removed = orderRepository.removeOrder(added);
+        Optional<Order> addedOptional = orderRepository.addOrder(testOrder1);
+        assertThat(addedOptional).isPresent();
+        Order added = addedOptional.get();
+
+        Optional<Order> removedOptional = orderRepository.removeOrder(added);
+        assertThat(removedOptional).isPresent();
+        Order removed = removedOptional.get();
 
         assertEquals(added.id(), removed.id());
-        assertNull(orderRepository.find(added.id()));
+        assertThat(orderRepository.find(added.id())).isEmpty();
     }
 
     @Test
     void removeOrder_shouldThrowWhenNull() {
-        Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.removeOrder(null));
-        assertEquals("Order cannot be null", e.getMessage());
+        Exception e = assertThrows(NullPointerException.class, () -> orderRepository.removeOrder(null));
     }
 
     @Test
-    void removeOrder_shouldThrowExceptionWhenOrderNotFound() {
+    void removeOrder_shouldReturnEmptyOptionalWhenOrderNotFound() {
         Order order = OrderBuilder.builder().id("non-existing-id").products(testProducts).build();
-        Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.removeOrder(order));
-        assertEquals("Order with id " + order.id() + " not found", e.getMessage());
+        assertThat(orderRepository.removeOrder(order)).isEmpty();
     }
 
     @Test
     void removeOrderWithId_shouldRemoveSuccessfully() {
-        Order added = orderRepository.addOrder(testOrder1);
-        Order removed = orderRepository.removeOrderWithId(added.id());
+        Optional<Order> addedOptional = orderRepository.addOrder(testOrder1);
+        assertThat(addedOptional).isPresent();
+        Order added = addedOptional.get();
+
+        Optional<Order> removedOptional = orderRepository.removeOrderWithId(added.id());
+        assertThat(removedOptional).isPresent();
+        Order removed = removedOptional.get();
 
         assertEquals(added.id(), removed.id());
-        assertNull(orderRepository.find(added.id()));
+        assertThat(orderRepository.find(added.id())).isEmpty();
     }
 
     @Test
     void removeOrderWithId_shouldThrowWhenNullId() {
-        Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.removeOrderWithId(null));
-        assertEquals("Order id cannot be null", e.getMessage());
+        Exception e = assertThrows(NullPointerException.class, () -> orderRepository.removeOrderWithId(null));
     }
 
     @Test
-    void removeOrderWithId_shouldThrowWhenIdNotFound() {
+    void removeOrderWithId_shouldReturnEmptyOptionalWhenIdNotFound() {
         String randomId = UUID.randomUUID().toString();
-        Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.removeOrderWithId(randomId));
-        assertEquals("Order with id " + randomId + " not found", e.getMessage());
+        assertThat(orderRepository.removeOrderWithId(randomId)).isEmpty();
     }
 
     @Test
     void find_shouldReturnOrderById() {
-        Order added = orderRepository.addOrder(testOrder1);
-        Order found = orderRepository.find(added.id());
+        Optional<Order> addedOptional = orderRepository.addOrder(testOrder1);
+        assertThat(addedOptional).isPresent();
+        Order added = addedOptional.get();
+        Optional<Order> foundOptional = orderRepository.find(added.id());
+        assertThat(foundOptional).isPresent();
+        Order found = foundOptional.get();
 
         assertEquals(added.id(), found.id());
         assertEquals(added.products(), found.products());
     }
 
     @Test
-    void find_shouldReturnNullWhenNotFound() {
-        Order result = orderRepository.find(UUID.randomUUID().toString());
-        assertNull(result);
+    void find_shouldReturnEmptyOptionalWhenNotFound() {
+        Optional<Order> result = orderRepository.find(UUID.randomUUID().toString());
+        assertThat(result).isEmpty();
     }
 
     @Test
     void find_shouldThrowWhenIdIsNull() {
-        Exception e = assertThrows(IllegalArgumentException.class, () -> orderRepository.find(null));
-        assertEquals("Order id cannot be null", e.getMessage());
+        Exception e = assertThrows(NullPointerException.class, () -> orderRepository.find(null));
     }
 
     @Test
@@ -163,7 +173,10 @@ class OrderRepositoryTest {
     @Test
     void countOrders_shouldReturnCorrectCountAfterRemove() {
         assertEquals(0, orderRepository.countOrders());
-        Order added = orderRepository.addOrder(testOrder1);
+        Optional<Order> addedOptional = orderRepository.addOrder(testOrder1);
+        assertThat(addedOptional).isPresent();
+        Order added = addedOptional.get();
+
         orderRepository.addOrder(testOrder2);
         assertEquals(2, orderRepository.countOrders());
         orderRepository.removeOrder(added);

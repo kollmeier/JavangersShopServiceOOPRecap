@@ -1,6 +1,5 @@
 package ckollmeier.de;
 
-import ckollmeier.de.Entity.Interface.ProductInterface;
 import ckollmeier.de.Entity.Order;
 import ckollmeier.de.Entity.OrderBuilder;
 import ckollmeier.de.Entity.OrderProduct;
@@ -15,6 +14,7 @@ import ckollmeier.de.Repository.StockRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
 import java.util.Scanner;
 
 public class Main {
@@ -113,17 +113,14 @@ public class Main {
     private static void removeProduct() {
         System.out.print("Enter product ID to remove: ");
         String productId = SCANNER.nextLine();
-        Product product = PRODUCT_REPOSITORY.find(productId);
-        if (product != null) {
+        PRODUCT_REPOSITORY.find(productId).ifPresentOrElse(product -> {
             try {
                 SHOP_SERVICE.removeProduct(product);
                 System.out.println("Product removed successfully.");
             } catch (IllegalArgumentException e) {
                 System.out.println("Error removing product: " + e.getMessage());
             }
-        } else {
-            System.out.println("Product not found.");
-        }
+        }, () -> System.out.println("Product not found."));
     }
 
     private static void listProducts() {
@@ -178,8 +175,7 @@ public class Main {
     private static void addStock() {
         System.out.print("Enter product ID: ");
         String productId = SCANNER.nextLine();
-        ProductInterface product = PRODUCT_REPOSITORY.find(productId);
-        if (product != null) {
+        PRODUCT_REPOSITORY.find(productId).ifPresentOrElse(product -> {
             System.out.print("Enter quantity: ");
             BigDecimal quantity = new BigDecimal(SCANNER.nextLine());
             System.out.print("Enter unit (KG, L, PCS): ");
@@ -192,16 +188,13 @@ public class Main {
             } catch (IllegalArgumentException e) {
                 System.out.println("Error adding stock: " + e.getMessage());
             }
-        } else {
-            System.out.println("Product not found.");
-        }
+        }, () -> System.out.println("Product not found."));
     }
 
     private static void increaseStock() {
         System.out.print("Enter product ID: ");
         String productId = SCANNER.nextLine();
-        ProductInterface product = PRODUCT_REPOSITORY.find(productId);
-        if (product != null) {
+        PRODUCT_REPOSITORY.find(productId).ifPresentOrElse(product -> {
             System.out.print("Enter quantity to increase: ");
             BigDecimal quantity = new BigDecimal(SCANNER.nextLine());
             System.out.print("Enter unit (KG, L, PCS): ");
@@ -212,16 +205,13 @@ public class Main {
             } catch (IllegalArgumentException e) {
                 System.out.println("Error increasing stock: " + e.getMessage());
             }
-        } else {
-            System.out.println("Product not found.");
-        }
+        }, () -> System.out.println("Product not found."));
     }
 
     private static void decreaseStock() {
         System.out.print("Enter product ID: ");
         String productId = SCANNER.nextLine();
-        ProductInterface product = PRODUCT_REPOSITORY.find(productId);
-        if (product != null) {
+        PRODUCT_REPOSITORY.find(productId).ifPresentOrElse(product -> {
             System.out.print("Enter quantity to decrease: ");
             BigDecimal quantity = new BigDecimal(SCANNER.nextLine());
             System.out.print("Enter unit (KG, L, PCS): ");
@@ -232,9 +222,7 @@ public class Main {
             } catch (IllegalArgumentException e) {
                 System.out.println("Error decreasing stock: " + e.getMessage());
             }
-        } else {
-            System.out.println("Product not found.");
-        }
+        }, () -> System.out.println("Product not found."));
     }
 
     private static void listStock() {
@@ -287,18 +275,13 @@ public class Main {
             if (productId.equalsIgnoreCase("done")) {
                 addingProducts = false;
             } else {
-                ProductInterface product = STOCK_REPOSITORY.find(productId);
-                if (product != null) {
+                STOCK_REPOSITORY.find(productId).ifPresentOrElse(stockArticle -> {
                     System.out.print("Enter quantity: ");
                     BigDecimal quantity = new BigDecimal(SCANNER.nextLine());
-                    OrderProduct orderProduct = new OrderProduct(
-                            STOCK_REPOSITORY.findByProductId(product.id())
-                    );
+                    OrderProduct orderProduct = new OrderProduct(stockArticle);
                     orderProduct.setQuantity(quantity);
                     orderProducts.add(orderProduct);
-                } else {
-                    System.out.println("Product not found.");
-                }
+                }, () -> System.out.println("Product not found."));
             }
         }
         Order order = OrderBuilder.builder().products(orderProducts).build();
@@ -313,16 +296,13 @@ public class Main {
     private static void removeOrder() {
         System.out.print("Enter order ID to remove: ");
         String orderId = SCANNER.nextLine();
-        Order order = ORDER_REPOSITORY.find(orderId);
-        if (order != null) {
-            try {
-                SHOP_SERVICE.removeOrder(order);
-                System.out.println("Order removed successfully.");
-            } catch (IllegalArgumentException e) {
-                System.out.println("Error removing order: " + e.getMessage());
-            }
-        } else {
-            System.out.println("Order not found.");
-        }
+        ORDER_REPOSITORY.find(orderId).ifPresentOrElse(
+            order -> {
+                SHOP_SERVICE.removeOrder(order).ifPresentOrElse(
+                        removedOrder -> System.out.println("Order removed successfully."),
+                        () -> System.out.println("Error removing order")
+                );
+            }, () ->  System.out.println("Order not found.")
+        );
     }
 }

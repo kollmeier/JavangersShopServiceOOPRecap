@@ -24,8 +24,8 @@ class ProductRepositoryTest {
     }
 
     @Test
-    void addProduct_shouldThrowIllegalArgumentException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> productRepository.addProduct(null));
+    void addProduct_shouldThrowNullPointerException_whenProductIsNull() {
+        assertThrows(NullPointerException.class, () -> productRepository.addProduct(null));
     }
 
     @Test
@@ -56,20 +56,20 @@ class ProductRepositoryTest {
     }
 
     @Test
-    void removeProduct_shouldThrowIllegalArgumentException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProduct(null));
+    void removeProduct_shouldThrowNullPointerException_whenProductIsNull() {
+        assertThrows(NullPointerException.class, () -> productRepository.removeProduct(null));
     }
 
     @Test
-    void removeProduct_shouldThrowIllegalArgumentException_whenProductIdIsNull() {
+    void removeProduct_shouldThrowNullPointerException_whenProductIdIsNull() {
         Product product = ProductBuilder.builder().name("Cola").build();
-        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProduct(product));
+        assertThrows(NullPointerException.class, () -> productRepository.removeProduct(product));
     }
 
     @Test
-    void removeProduct_shouldThrowIllegalArgumentException_whenProductIsNotFound() {
-        productRepository.addProduct(testProduct1);
-        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProduct(testProduct2));
+    void removeProduct_shouldReturnEmptyOptional_whenProductIsNotFound() {
+        productRepository.addProduct(testProduct1.withId("prod-1"));
+        assertThat(productRepository.removeProduct(testProduct2.withId("prod-2"))).isEmpty();
     }
 
     @Test
@@ -81,14 +81,14 @@ class ProductRepositoryTest {
     }
 
     @Test
-    void removeProductWithId_shouldThrowIllegalArgumentException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProductWithId(null));
+    void removeProductWithId_shouldThrowNullPointerException_whenProductIsNull() {
+        assertThrows(NullPointerException.class, () -> productRepository.removeProductWithId(null));
     }
 
     @Test
-    void removeProductWithId_shouldThrowIllegalArgumentException_whenProductIsNotFound() {
-        productRepository.addProduct(testProduct1);
-        assertThrows(IllegalArgumentException.class, () -> productRepository.removeProductWithId(testProduct2.id()));
+    void removeProductWithId_shouldReturnEmptyOptional_whenProductIsNotFound() {
+        productRepository.addProduct(testProduct1.withId("prod-1"));
+        assertThat(productRepository.removeProductWithId("prod-2")).isEmpty();
     }
 
     @Test
@@ -100,21 +100,21 @@ class ProductRepositoryTest {
     }
 
     @Test
-    void find_shouldThrowIllegalArgumentException_whenIdIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> productRepository.find(null));
+    void find_shouldThrowNullPointerException_whenIdIsNull() {
+        assertThrows(NullPointerException.class, () -> productRepository.find(null));
     }
 
     @Test
     void find_shouldReturnNull_whenIdIsNotInRepository() {
         productRepository.addProduct(testProduct1);
-        assertThat(productRepository.find("xxxxxxx")).isNull();
+        assertThat(productRepository.find("xxxxxxx")).isEmpty();
     }
 
     @Test
     void find_shouldReturnProduct_whenIdIsInRepository() {
         Product addedProduct1 = productRepository.addProduct(testProduct1);
         productRepository.addProduct(testProduct2);
-        assertThat(productRepository.find(addedProduct1.id())).isEqualTo(addedProduct1);
+        assertThat(productRepository.find(addedProduct1.id())).isPresent().contains(addedProduct1);
     }
 
     @Test

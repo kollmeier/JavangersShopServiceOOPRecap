@@ -1,10 +1,14 @@
 package ckollmeier.de.Repository;
 
 import ckollmeier.de.Entity.Order;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+
+import lombok.NonNull;
 
 public final class OrderRepository {
     /**
@@ -12,10 +16,7 @@ public final class OrderRepository {
      */
     private final Map<String, Order> orders = new HashMap<>();
 
-    private Order orderWithId(final Order order) {
-        if (order == null) {
-            throw new IllegalArgumentException("Order cannot be null");
-        }
+    private Order orderWithId(final @NonNull Order order) {
         if (order.id() != null) {
             return order;
         }
@@ -27,26 +28,20 @@ public final class OrderRepository {
      * @param order the order to add to list
      * @return the added order
      */
-    public Order addOrder(final Order order) {
-        if (order == null) {
-            throw new IllegalArgumentException("Order cannot be null");
-        }
+    public Optional<Order> addOrder(final @NonNull Order order) {
         Order orderWithId = orderWithId(order);
-        if (find(orderWithId.id()) != null) {
+        if (find(orderWithId.id()).isPresent()) {
             throw new IllegalArgumentException("Order with id " + orderWithId.id() + " already exists");
         }
         orders.put(orderWithId.id(), orderWithId);
-        return orderWithId;
+        return Optional.of(orderWithId);
     }
 
     /**
      * @param order the order to remove from list
      * @return the removed order
      */
-    public Order removeOrder(final Order order) {
-        if (order == null) {
-            throw new IllegalArgumentException("Order cannot be null");
-        }
+    public Optional<Order> removeOrder(final @NonNull Order order) {
         return removeOrderWithId(order.id());
     }
 
@@ -54,27 +49,19 @@ public final class OrderRepository {
      * @param orderId id of the order to remove from list
      * @return the removed order
      */
-    public Order removeOrderWithId(final String orderId) {
-        if (orderId == null) {
-            throw new IllegalArgumentException("Order id cannot be null");
-        }
-        Order found = find(orderId);
-        if (found == null) {
-            throw new IllegalArgumentException("Order with id " + orderId + " not found");
-        }
-        orders.remove(found.id());
-        return found;
+    public Optional<Order> removeOrderWithId(final @NonNull String orderId) {
+        return find(orderId).map(order -> {
+            orders.remove(order.id());
+            return order;
+        });
     }
 
     /**
      * @param id id of order to find
      * @return found order or null
      */
-    public Order find(final String id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Order id cannot be null");
-        }
-        return orders.get(id);
+    public Optional<Order> find(final @NonNull String id) {
+        return Optional.ofNullable(orders.get(id));
     }
 
     public Collection<Order> findAll() {

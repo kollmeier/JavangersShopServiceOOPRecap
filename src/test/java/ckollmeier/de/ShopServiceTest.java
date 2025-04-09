@@ -13,8 +13,10 @@ import org.mockito.MockitoAnnotations;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -57,23 +59,21 @@ class ShopServiceTest {
         List<OrderProduct> orderProducts = List.of(orderProduct);
         Order order = new Order("order-1", orderProducts);
 
-
         when(stockRepository.isSufficientInStock(orderProduct, BigDecimal.ONE, UnitEnum.PCS)).thenReturn(true);
-        when(orderRepository.addOrder(any(Order.class))).thenReturn(order);
+        when(orderRepository.addOrder(any(Order.class))).thenReturn(Optional.of(order));
 
         // Act
-        Order result = shopService.addOrder(order);
+        Optional<Order> result = shopService.addOrder(order);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(order.id(), result.id());
+        assertThat(result).isPresent();
+        assertEquals(order.id(), result.get().id());
         verify(stockRepository, times(1)).decreaseQuantity(orderProduct, BigDecimal.ONE, UnitEnum.PCS);
         verify(orderRepository, times(1)).addOrder(any(Order.class));
     }
 
     @Test
     void addOrder_InsufficientStock_OrderNotAdded() {
-        // Arrange
         // Arrange
         Product product = ProductBuilder.builder().id(UUID.randomUUID().toString()).name("Product 1").build();
         BigDecimal quantity = BigDecimal.ONE;
@@ -95,14 +95,14 @@ class ShopServiceTest {
         Order order = new Order("order-1", orderProducts);
 
         when(stockRepository.isSufficientInStock(orderProduct, BigDecimal.TEN, unit)).thenReturn(false);
-        when(orderRepository.addOrder(any(Order.class))).thenReturn(order.withProducts(new ArrayList<>()));
+        when(orderRepository.addOrder(any(Order.class))).thenReturn(Optional.of(order.withId(order.id()).withProducts(new ArrayList<>())));
 
         // Act
-        Order result = shopService.addOrder(order);
+        Optional<Order> result = shopService.addOrder(order);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(0, result.products().size());
+        assertThat(result).isPresent();
+        assertEquals(0, result.get().products().size());
         verify(stockRepository, never()).decreaseQuantity(any(), any(), any());
         verify(orderRepository, times(1)).addOrder(any(Order.class));
     }
@@ -121,23 +121,23 @@ class ShopServiceTest {
         List<OrderProduct> orderProducts = List.of(orderProduct);
         Order order = new Order("order-1", orderProducts);
 
-        when(orderRepository.find(order.id())).thenReturn(order);
-        when(orderRepository.removeOrder(order)).thenReturn(order);
+        when(orderRepository.find(order.id())).thenReturn(Optional.of(order));
+        when(orderRepository.removeOrder(order)).thenReturn(Optional.of(order.withId(order.id())));
 
         // Act
-        Order result = shopService.removeOrder(order);
+        Optional<Order> result = shopService.removeOrder(order);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(order.id(), result.id());
+        assertThat(result).isPresent();
+        assertEquals(order.id(), result.get().id());
         verify(stockRepository, times(1)).increaseQuantity(orderProduct, BigDecimal.ONE, UnitEnum.PCS);
         verify(orderRepository, times(1)).removeOrder(order);
     }
 
     @Test
-    void removeOrder_NullOrder_ThrowsIllegalArgumentException() {
+    void removeOrder_NullOrder_ThrowsNullPointerException() {
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> shopService.removeOrder(null));
+        assertThrows(NullPointerException.class, () -> shopService.removeOrder(null));
     }
 
     @Test
@@ -147,16 +147,17 @@ class ShopServiceTest {
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> shopService.removeOrder(order));
+        verify(orderRepository, never()).removeOrder(any(Order.class));
     }
 
     @Test
-    void removeOrder_OrderNotFound_ThrowsIllegalArgumentException() {
+    void removeOrder_OrderNotFound_ThrowsNullPointerException() {
         // Arrange
         Order order = new Order("order-1", new ArrayList<>());
         when(orderRepository.find(order.id())).thenReturn(null);
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> shopService.removeOrder(order));
+        assertThrows(NullPointerException.class, () -> shopService.removeOrder(order));
     }
 
     @Test
@@ -175,34 +176,34 @@ class ShopServiceTest {
     }
 
     @Test
-    void addProduct_NullProduct_ThrowsIllegalArgumentException() {
+    void addProduct_NullProduct_ThrowsNullPointerException() {
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> shopService.addProduct(null));
+        assertThrows(NullPointerException.class, () -> shopService.addProduct(null));
     }
 
     @Test
     void removeProduct_ValidProduct_ProductRemoved() {
         // Arrange
         Product product = ProductBuilder.builder().id(UUID.randomUUID().toString()).name("Test Product").build();
-        when(productRepository.removeProduct(product)).thenReturn(product);
+        when(productRepository.removeProduct(product)).thenReturn(Optional.of(product));
 
         // Act
-        Product result = shopService.removeProduct(product);
+        Optional<Product> result = shopService.removeProduct(product);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(product.id(), result.id());
+        assertFalse(result.isEmpty());
+        assertEquals(product.id(), result.get().id());
         verify(productRepository, times(1)).removeProduct(product);
     }
 
     @Test
-    void removeProduct_NonExistingProduct_ThrowsIllegalArgumentException() {
+    void removeProduct_NonExistingProduct_ReturnsEmptyOptional() {
         // Arrange
         Product product = ProductBuilder.builder().id(UUID.randomUUID().toString()).name("Non-Existing Product").build();
-        when(productRepository.find(product.id())).thenReturn(null);
+        when(productRepository.find(product.id())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> shopService.removeProduct(product));
+        assertTrue(shopService.removeProduct(product).isEmpty());
     }
 
     @Test
@@ -249,9 +250,9 @@ class ShopServiceTest {
     }
 
     @Test
-    void addStock_NullProduct_ThrowsIllegalArgumentException() {
+    void addStock_NullProduct_ThrowsNullPointerException() {
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> shopService.addStock(null, BigDecimal.ONE, UnitEnum.PCS, BigDecimal.TEN));
+        assertThrows(NullPointerException.class, () -> shopService.addStock(null, BigDecimal.ONE, UnitEnum.PCS, BigDecimal.TEN));
     }
 
     @Test
@@ -312,6 +313,7 @@ class ShopServiceTest {
         UnitEnum unit = UnitEnum.PCS;
 
         when(stockRepository.isSufficientInStock(product, quantity, unit)).thenReturn(false);
+        when(stockRepository.decreaseQuantity(product, quantity, unit)).thenCallRealMethod();
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> shopService.decreaseStock(product, quantity, unit));
@@ -339,8 +341,8 @@ class ShopServiceTest {
                 .build();
 
         when(productRepository.findAll()).thenReturn(products);
-        when(stockRepository.findByProductId(product1.id())).thenReturn(stockArticle1);
-        when(stockRepository.findByProductId(product2.id())).thenReturn(stockArticle2);
+        when(stockRepository.findByProductId(product1.id())).thenReturn(Optional.ofNullable(stockArticle1));
+        when(stockRepository.findByProductId(product2.id())).thenReturn(Optional.ofNullable(stockArticle2));
 
         // Act
         List<StockArticle> result = shopService.getAllStock();
@@ -362,8 +364,8 @@ class ShopServiceTest {
         List<Product> products = List.of(product1, product2);
 
         when(productRepository.findAll()).thenReturn(products);
-        when(stockRepository.findByProductId(product1.id())).thenReturn(null);
-        when(stockRepository.findByProductId(product2.id())).thenReturn(null);
+        when(stockRepository.findByProductId(product1.id())).thenReturn(Optional.empty());
+        when(stockRepository.findByProductId(product2.id())).thenReturn(Optional.empty());
 
         // Act
         List<StockArticle> result = shopService.getAllStock();

@@ -13,23 +13,25 @@ import ckollmeier.de.Repository.StockRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.index.qual.NonNegative;
+
+import javax.annotation.Nonnegative;
+
+@RequiredArgsConstructor
 public class ShopService {
     private final OrderRepository orderRepository;
     private final StockRepository stockRepository;
     private final ProductRepository productRepository;
 
-    public ShopService(final OrderRepository orderRepository, final StockRepository stockRepository, final ProductRepository productRepository) {
-        this.orderRepository = orderRepository;
-        this.stockRepository = stockRepository;
-        this.productRepository = productRepository;
-    }
-
     /**
      * @param order orders to place
      * @return the placed order
      */
-    public Order addOrder(final Order order) {
+    public Optional<Order> addOrder(final @NonNull Order order) {
         List<OrderProduct> productList = new ArrayList<>();
         for (OrderProduct product : order.products()) {
             if (stockRepository.isSufficientInStock(product, product.getQuantity(), product.unit())) {
@@ -48,16 +50,11 @@ public class ShopService {
      * @param order the order to remove
      * @return the removed order
      */
-    public Order removeOrder(final Order order) {
-        if (order == null) {
-            throw new IllegalArgumentException("Order cannot be null");
-        }
+    public Optional<Order> removeOrder(final @NonNull Order order) {
         if (order.id() == null) {
             throw new IllegalArgumentException("Order id cannot be null");
         }
-        if (orderRepository.find(order.id()) == null) {
-            throw new IllegalArgumentException("Order with id " + order.id() + " not found");
-        }
+        orderRepository.find(order.id()).orElseThrow(() -> new IllegalArgumentException("Order with id " + order.id() + " not found"));
         for (OrderProduct product : order.products()) {
             stockRepository.increaseQuantity(product, product.getQuantity(), product.unit());
         }
@@ -71,7 +68,7 @@ public class ShopService {
      * @param product the product to be added
      * @return the added product
      */
-    public Product addProduct(final Product product) {
+    public Product addProduct(final @NonNull Product product) {
         return productRepository.addProduct(product);
     }
 
@@ -81,7 +78,7 @@ public class ShopService {
      * @param product the product to be removed
      * @return the removed product
      */
-    public Product removeProduct(final Product product) {
+    public Optional<Product> removeProduct(final @NonNull Product product) {
         return productRepository.removeProduct(product);
     }
 
@@ -103,7 +100,7 @@ public class ShopService {
      * @param price    the price of the stock
      * @return the added stock article
      */
-    public StockArticle addStock(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit, final BigDecimal price) {
+    public StockArticle addStock(final @NonNull ProductInterface product, final @NonNull @NonNegative BigDecimal quantity, final @NonNull UnitEnum unit, final @NonNull @NonNegative BigDecimal price) {
         return stockRepository.addProduct(product, quantity, unit, price);
     }
 
@@ -115,7 +112,7 @@ public class ShopService {
      * @param unit     the unit of measurement for the stock
      * @return the updated stock article
      */
-    public StockArticle increaseStock(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
+    public StockArticle increaseStock(final @NonNull ProductInterface product, final @NonNull @NonNegative BigDecimal quantity, final @NonNull UnitEnum unit) {
         return stockRepository.increaseQuantity(product, quantity, unit);
     }
 
@@ -127,7 +124,7 @@ public class ShopService {
      * @param unit     the unit of measurement for the stock
      * @return the updated stock article
      */
-    public StockArticle decreaseStock(final ProductInterface product, final BigDecimal quantity, final UnitEnum unit) {
+    public StockArticle decreaseStock(final @NonNull ProductInterface product, final @NonNull @Nonnegative BigDecimal quantity, final @NonNull UnitEnum unit) {
         return stockRepository.decreaseQuantity(product, quantity, unit);
     }
 
@@ -139,10 +136,8 @@ public class ShopService {
     public List<StockArticle> getAllStock() {
         List<StockArticle> allStock = new ArrayList<>();
         for (Product product : productRepository.findAll()) {
-            StockArticle stockArticle = stockRepository.findByProductId(product.id());
-            if (stockArticle != null) {
-                allStock.add(stockArticle);
-            }
+            Optional<StockArticle> stockArticle = stockRepository.findByProductId(product.id());
+            stockArticle.ifPresent(allStock::add);
         }
         return allStock;
     }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -103,20 +104,20 @@ public class StockRepositoryTest {
 
     @Test
     void find_shouldReturnNull_whenIdNotStored() {
-        StockArticle found = stockRepository.find("non-existent-id");
-        assertNull(found);
+        Optional<StockArticle> found = stockRepository.find("non-existent-id");
+        assertTrue(found.isEmpty());
     }
 
     @Test
     void findByProductId_shouldReturnStockArticle_whenProductExists() {
-        StockArticle found = stockRepository.findByProductId("prod-1");
-        assertNotNull(found);
+        Optional<StockArticle> found = stockRepository.findByProductId("prod-1");
+        assertTrue(found.isPresent());
     }
 
     @Test
     void findByProductId_shouldReturnNull_whenProductNotExists() {
-        StockArticle found = stockRepository.findByProductId("non-existent-product");
-        assertNull(found);
+        Optional<StockArticle> found = stockRepository.findByProductId("non-existent-product");
+        assertTrue(found.isEmpty());
     }
 
     @Test
@@ -169,71 +170,71 @@ public class StockRepositoryTest {
 
     @Test
     void addProduct_shouldThrowException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.addProduct(null, new BigDecimal("5.0"), UnitEnum.L, new BigDecimal("10.99")));
+        assertThrows(NullPointerException.class, () -> stockRepository.addProduct(null, new BigDecimal("5.0"), UnitEnum.L, new BigDecimal("10.99")));
     }
 
     @Test
     void addProduct_shouldThrowException_whenQuantityIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.addProduct(product, null, UnitEnum.L, new BigDecimal("10.99")));
+        assertThrows(NullPointerException.class, () -> stockRepository.addProduct(product, null, UnitEnum.L, new BigDecimal("10.99")));
     }
 
     @Test
     void addProduct_shouldThrowException_whenUnitIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.addProduct(product, new BigDecimal("5.0"), null, new BigDecimal("10.99")));
+        assertThrows(NullPointerException.class, () -> stockRepository.addProduct(product, new BigDecimal("5.0"), null, new BigDecimal("10.99")));
     }
 
     @Test
     void addProduct_shouldThrowException_whenPriceIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.addProduct(product, new BigDecimal("5.0"), UnitEnum.L, null));
+        assertThrows(NullPointerException.class, () -> stockRepository.addProduct(product, new BigDecimal("5.0"), UnitEnum.L, null));
     }
 
     @Test
     void increaseQuantity_shouldThrowException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.increaseQuantity(null, new BigDecimal("5.0"), UnitEnum.L));
+        assertThrows(NullPointerException.class, () -> stockRepository.increaseQuantity(null, new BigDecimal("5.0"), UnitEnum.L));
     }
 
     @Test
     void increaseQuantity_shouldThrowException_whenQuantityIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.increaseQuantity(product, null, UnitEnum.L));
+        assertThrows(NullPointerException.class, () -> stockRepository.increaseQuantity(product, null, UnitEnum.L));
     }
 
     @Test
     void increaseQuantity_shouldThrowException_whenUnitIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.increaseQuantity(product, new BigDecimal("5.0"), null));
+        assertThrows(NullPointerException.class, () -> stockRepository.increaseQuantity(product, new BigDecimal("5.0"), null));
     }
 
     @Test
     void decreaseQuantity_shouldThrowException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.decreaseQuantity(null, new BigDecimal("5.0"), UnitEnum.L));
+        assertThrows(NullPointerException.class, () -> stockRepository.decreaseQuantity(null, new BigDecimal("5.0"), UnitEnum.L));
     }
 
     @Test
     void decreaseQuantity_shouldThrowException_whenQuantityIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.decreaseQuantity(product, null, UnitEnum.L));
+        assertThrows(NullPointerException.class, () -> stockRepository.decreaseQuantity(product, null, UnitEnum.L));
     }
 
     @Test
     void decreaseQuantity_shouldThrowException_whenUnitIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.decreaseQuantity(product, new BigDecimal("5.0"), null));
+        assertThrows(NullPointerException.class, () -> stockRepository.decreaseQuantity(product, new BigDecimal("5.0"), null));
     }
 
     @Test
     void isSufficientInStock_shouldThrowException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.isSufficientInStock(null, new BigDecimal("5.0"), UnitEnum.L));
+        assertThrows(NullPointerException.class, () -> stockRepository.isSufficientInStock(null, new BigDecimal("5.0"), UnitEnum.L));
     }
 
     @Test
     void isSufficientInStock_shouldThrowException_whenQuantityIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.isSufficientInStock(product, null, UnitEnum.L));
+        assertThrows(NullPointerException.class, () -> stockRepository.isSufficientInStock(product, null, UnitEnum.L));
     }
 
     @Test
     void isSufficientInStock_shouldThrowException_whenUnitIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.isSufficientInStock(product, new BigDecimal("5.0"), null));
+        assertThrows(NullPointerException.class, () -> stockRepository.isSufficientInStock(product, new BigDecimal("5.0"), null));
     }
 
     @Test
     void isInStock_shouldThrowException_whenProductIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> stockRepository.isInStock(null));
+        assertThrows(NullPointerException.class, () -> stockRepository.isInStock(null));
     }
 }
