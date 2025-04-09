@@ -97,7 +97,7 @@ public class Main {
         System.out.print("Enter product description: ");
         String description = SCANNER.nextLine();
         System.out.print("Enter product content: ");
-        BigDecimal content = new BigDecimal(SCANNER.nextLine());
+        BigDecimal content = ValidationUtils.validated(new BigDecimal(SCANNER.nextLine()));
         System.out.print("Enter product unit (KG, L, PCS): ");
         UnitEnum unit = UnitEnum.valueOf(SCANNER.nextLine());
 
