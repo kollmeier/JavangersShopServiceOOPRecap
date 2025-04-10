@@ -83,7 +83,7 @@ public final class ValidatedInput {
         String message = e.getConstraintViolations().stream()
             .map(ConstraintViolation::getMessage)
             .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b);
-        System.out.print("\u001B[31m" + message + "\u001B[0m");
+        System.out.println("\u001B[31m" + message + "\u001B[0m");
         System.out.print("\33[u");
     }
 }
